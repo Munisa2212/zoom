@@ -124,17 +124,21 @@ export default function EmbeddedZoomMeeting({
         return;
       }
 
-      const { ZoomMtg } = await import("@zoom/meetingsdk");
-      ZoomMtg.leave({
-        success: () => {
-          console.log("Left meeting");
-          onLeave();
-        },
-        error: (err: any) => {
-          console.error("Error leaving meeting", err);
-          onLeave();
-        },
-      });
+      const ZoomMtg = zoomMtgRef.current as any;
+      if (ZoomMtg && typeof ZoomMtg.leave === 'function') {
+        ZoomMtg.leave({
+          success: () => {
+            console.log("Left meeting");
+            onLeave();
+          },
+          error: (err: any) => {
+            console.error("Error leaving meeting", err);
+            onLeave();
+          },
+        });
+      } else {
+        onLeave();
+      }
     } catch (err) {
       console.error("Error in leave function", err);
       onLeave();
