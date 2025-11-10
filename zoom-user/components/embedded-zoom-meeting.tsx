@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ZoomMtg } from "@zoom/meetingsdk";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
@@ -23,9 +22,12 @@ export default function EmbeddedZoomMeeting({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const meetingContainerRef = useRef<HTMLDivElement>(null);
+  const zoomMtgRef = useRef<any>(null);
   const sdkKey = process.env.NEXT_PUBLIC_SDK_KEY;
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (!sdkKey) {
       setError("SDK Key is not configured. Please set NEXT_PUBLIC_SDK_KEY in your environment variables.");
       setIsLoading(false);
@@ -36,6 +38,10 @@ export default function EmbeddedZoomMeeting({
 
     async function initializeMeeting() {
       try {
+        // Dynamically import Zoom SDK only on client side
+        const { ZoomMtg } = await import("@zoom/meetingsdk");
+        zoomMtgRef.current = ZoomMtg;
+
         // Get signature from backend
         const signatureRes = await fetch(
           `http://localhost:3000/zoom/signature?meetingNumber=${meetingNumber}&role=0`,
@@ -110,8 +116,15 @@ export default function EmbeddedZoomMeeting({
     };
   }, [meetingNumber, userName, password, authToken, sdkKey]);
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
     try {
+      if (!zoomMtgRef.current) {
+        // If SDK not loaded, just leave
+        onLeave();
+        return;
+      }
+
+      const { ZoomMtg } = await import("@zoom/meetingsdk");
       ZoomMtg.leave({
         success: () => {
           console.log("Left meeting");
