@@ -58,10 +58,10 @@ export default function EmbeddedZoomMeeting({
 
         const { signature } = await signatureRes.json();
 
-        // Initialize Zoom SDK
-        ZoomMtg.setZoomJSLib("https://source.zoom.us/3.9.0/lib", "/av");
-        ZoomMtg.preLoadWasm();
-        ZoomMtg.prepareWebSDK();
+        // Initialize Zoom SDK - v4.x Meeting SDK handles library loading internally
+        // No need to setZoomJSLib for the npm package version
+        await ZoomMtg.preLoadWasm();
+        await ZoomMtg.prepareWebSDK();
 
         ZoomMtg.init({
           leaveUrl: window.location.origin,
